@@ -1,0 +1,99 @@
+# --- GLOBAL ---
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables
+.env
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDEs & Editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Optional build cache
+.cache/
+.tmp/
+
+# Lint & Testing
+coverage/
+.nyc_output/
+*.lcov
+
+# --- FRONTEND (Vue.js) ---
+
+# Vue CLI build output
+dist/
+public/build/
+
+# Vite output
+.vite/
+dist-ssr/
+ssr-manifest.json
+
+# Local dev server files (e.g., vite)
+dev-dist/
+
+# Vuepress
+.vuepress/dist
+
+# Nuxt
+.nuxt/
+output/
+
+# --- BACKEND (Node.js) ---
+
+# Build output
+build/
+dist/
+
+# PM2 log files
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# SQLite
+*.sqlite
+*.sqlite3
+
+# Mongoose/Mongo
+dump/
+
+# TypeScript
+*.tsbuildinfo
+
+# Prisma
+prisma/migrations/
+
+# --- DOCKER ---
+
+# Docker related
+docker-compose.override.yml
+.docker/
+
+# --- CUSTOM ---
+
+# Ignore any secrets or personal dev stuff
+secrets.*
+*.local
+
+# Ignore local SSL certs if any
+certs/
+*.pem
+*.crt
+*.key
