@@ -3,9 +3,12 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const { sequelize } = require('./models');
+
 
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
+const bookRoutes = require('./routes/bookRoutes');
 
 const { connectMariaDB } = require('./config/db.mariadb');
 const { connectMongoDB } = require('./config/db.mongo');
@@ -21,6 +24,7 @@ app.use(morgan('dev'));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/books', bookRoutes);
 
 
 // Route test

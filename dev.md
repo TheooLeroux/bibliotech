@@ -34,13 +34,26 @@ Elle vise l’accessibilité culturelle pour tous et la mise en avant de jeunes 
 * `is_active` (bool), `deban_at` (datetime), `last_login` (datetime)
 * `created_at`, `updated_at`, `reset_token`, `reset_token_expires`
 
-#### Table `books` *(à venir)*
+#### Table `books`
 
-* Titre, auteur, description, style global, date publication
-* Fichier (via Mongo), utilisateur\_id, tag `jeune_auteur`
-* Lié à `genres`, `subgenres`
+* `id`, `title`, `author`, `description`, `publication_date`, `file_url`
+* `mongo_doc_id`, `is_young_author`, `language`, `cover_url`, `visibility`
+* `read_count`, `download_count`, `user_id`, `main_genre_id`
+* `created_at`, `updated_at`
 
-#### Autres tables prévues :
+#### Table `main_genres`
+
+* `id`, `name`
+
+#### Table `sub_genres`
+
+* `id`, `name`
+
+#### Pivot `book_sub_genres`
+
+* `id`, `book_id`, `sub_genre_id`
+
+#### Autres tables
 
 * `favorites`, `reports`, `comments`, `reading_history`
 
@@ -81,7 +94,7 @@ Elle vise l’accessibilité culturelle pour tous et la mise en avant de jeunes 
 * [x] Vérification de disponibilité (pseudo/email)
 * [x] Récupération des infos du user connecté
 * [x] Comptage total d’utilisateurs
-* [x] Liste paginée des users (future interface admin)
+* [x] Liste paginée des utilisateurs (admin futur)
 
 ### 🧱 Base de données
 
@@ -113,8 +126,6 @@ Elle vise l’accessibilité culturelle pour tous et la mise en avant de jeunes 
 | POST    | `/forgot-password`       | Demande de reset mot de passe  |
 | POST    | `/reset-password/:token` | Appliquer nouveau mot de passe |
 
----
-
 ### 👤 Utilisateur (`/api/users`)
 
 | Méthode | Route                   | Description                                  |
@@ -126,18 +137,27 @@ Elle vise l’accessibilité culturelle pour tous et la mise en avant de jeunes 
 | GET     | `/count`                | Nombre total d’utilisateurs                  |
 | GET     | `/`                     | Liste paginée des utilisateurs (admin futur) |
 
+### 📚 Livres (`/api/books`)
+
+| Méthode | Route  | Description                           |
+| ------- | ------ | ------------------------------------- |
+| POST    | `/`    | Créer un livre (PDF/EPUB + metadata)  |
+| GET     | `/`    | Lister tous les livres (avec filtres) |
+| GET     | `/:id` | Détails d’un livre                    |
+| PUT     | `/:id` | Modifier un livre + cover + eBook     |
+| DELETE  | `/:id` | Supprimer un livre (et son eBook)     |
+
 ---
 
 ## 🔜 Prochaines étapes
 
-1. 📙 Mise en place du modèle `Book` (SQL)
-2. 📄 Route `POST /books` — création de livre + fichier MongoDB
-3. 🔎 Filtres / recherche de livres (`GET /books`)
-4. ❤️ Système de favoris / historique / signalement
-5. 🛠 Interface admin & route de modération
-6. 🚨 Middleware `adminOnly` pour sécuriser les actions critiques
-7. 🧪 Ajout de tests Jest (auth & user d’abord)
+1. ☑️ Mettre en place tests Jest pour auth & users
+2. 🎯 Implémenter pagination et filtres sur GET /api/books
+3. 📊 Ajouter stats de lecture (read\_count, download\_count)
+4. 🎨 Optimiser upload de couverture (compression, vignettes)
+5. 🚨 Finaliser middleware adminOnly & UI modérateur
+6. 🧪 Couvrir les routes livres par tests unitaires
 
 ---
 
-> 📌 **Note** : code organisé par domaine (`authController`, `userController`…), middleware dédié, routes isolées = projet prêt pour monter en charge proprement.
+> 📌 **Note** : code organisé par domaine (`authController`, `bookController`, `userController`…), middleware dédié, routes isolées = projet prêt pour monter en charge proprement.
