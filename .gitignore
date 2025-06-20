@@ -97,3 +97,6 @@ certs/
 *.pem
 *.crt
 *.key
+
+#upload des images
+uploads/

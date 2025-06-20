@@ -3,29 +3,35 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const mongoose = require('mongoose');
+
+const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
+
+const { connectMariaDB } = require('./config/db.mariadb');
+const { connectMongoDB } = require('./config/db.mongo');
 
 const app = express();
 
-// Middlewares
-app.use(express.json());
+// Middlewares globaux
 app.use(cors());
 app.use(helmet());
+app.use(express.json());
 app.use(morgan('dev'));
 
-// Exemple de route
+
+app.use('/api/auth', authRoutes);
+app.use('/api/user', userRoutes);
+
+
+// Route test
 app.get('/', (req, res) => {
-    res.send('BiblioTech API');
+    res.send('BiblioTech API is running...');
 });
 
-// Démarrage du serveur
-const PORT = process.env.PORT || 4000;
-
-app.listen(PORT, () => {
-    console.log(`Serveur lancé sur le port ${PORT}`);
+// Lancement serveur + connexions BDD
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, async () => {
+    await connectMariaDB();
+    await connectMongoDB();
+    console.log(`🚀 Serveur lancé sur le port ${PORT}`);
 });
-
-// Connexion MongoDB
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('MongoDB connecté'))
-    .catch(err => console.error('Erreur MongoDB', err));
