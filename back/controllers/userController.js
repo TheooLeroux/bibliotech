@@ -1,101 +1,64 @@
-const bcrypt = require('bcryptjs');
-const fs = require('fs');
-const { Op } = require('sequelize');
-const User = require('../models/User');
+const { User } = require('../models');
 
-exports.getProfile = async (req, res) => {
+// GET /users — admin only
+exports.getAll = async (req, res) => {
     try {
-        const user = await User.findByPk(req.user.id, {
-            attributes: { exclude: ['password', 'reset_token', 'reset_token_expires'] }
-        });
-
-        if (!user) return res.status(404).json({ message: 'User not found.' });
-
-        return res.status(200).json({ user });
+        const users = await User.findAll();
+        res.status(200).json(users);
     } catch (err) {
-        return res.status(500).json({ message: 'Server error.', error: err.message });
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
     }
 };
 
-exports.updateProfile = async (req, res) => {
-    const userId = req.user.id;
-
+// GET /users/:id — owner OR admin
+exports.getOne = async (req, res) => {
     try {
-        const user = await User.findByPk(userId);
-        if (!user) return res.status(404).json({ message: 'User not found.' });
-
-        const updateData = {};
-
-        if ('pseudo' in req.body && req.body.pseudo.trim()) {
-            // Vérifier si le pseudo est pris par un autre
-            const other = await User.findOne({
-                where: {
-                    pseudo: req.body.pseudo,
-                    id: { [Op.ne]: userId }
-                }
-            });
-            if (other) return res.status(400).json({ message: 'Pseudo already taken by another user.' });
-            updateData.pseudo = req.body.pseudo;
+        const targetId = parseInt(req.params.id, 10);
+        if (req.user.id !== targetId && req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Forbidden' });
         }
+        const user = await User.findByPk(targetId);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        res.status(200).json(user);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
 
-        if ('bio' in req.body && req.body.bio.trim()) {
-            updateData.bio = req.body.bio;
+// PUT /users/:id — owner OR admin
+exports.update = async (req, res) => {
+    try {
+        const targetId = parseInt(req.params.id, 10);
+        if (req.user.id !== targetId && req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Forbidden' });
         }
+        const user = await User.findByPk(targetId);
+        if (!user) return res.status(404).json({ error: 'User not found' });
 
-        if ('email' in req.body) {
-            return res.status(400).json({ message: 'Email cannot be modified.' });
-        }
-
+        const updates = { ...req.body };
         if (req.file) {
-            if (user.avatar_url && fs.existsSync(user.avatar_url)) {
-                fs.unlinkSync(user.avatar_url);
-            }
-            updateData.avatar_url = req.file.path;
+            updates.avatar = req.file.filename;
         }
 
-        if (Object.keys(updateData).length === 0) {
-            return res.status(400).json({ message: 'No valid fields provided.' });
-        }
-
-        await user.update(updateData);
-
-        return res.status(200).json({ message: 'Profile updated.', updated: updateData });
+        await user.update(updates);
+        res.status(200).json(user);
     } catch (err) {
-        return res.status(500).json({ message: 'Server error.', error: err.message });
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
     }
 };
 
-
-
-// 1. Total users
-exports.getUserCount = async (req, res) => {
+// DELETE /users/:id — admin only
+exports.remove = async (req, res) => {
     try {
-        const count = await User.count();
-        return res.status(200).json({ total: count });
+        const user = await User.findByPk(req.params.id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        await user.destroy();
+        res.sendStatus(200);
     } catch (err) {
-        return res.status(500).json({ message: 'Server error.', error: err.message });
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
     }
 };
-
-// 2. Check pseudo dispo
-exports.checkPseudo = async (req, res) => {
-    const { pseudo } = req.params;
-    try {
-        const user = await User.findOne({ where: { pseudo } });
-        return res.status(200).json({ available: !user });
-    } catch (err) {
-        return res.status(500).json({ message: 'Server error.', error: err.message });
-    }
-};
-// 2. Check email dispo
-exports.checkEmail = async (req, res) => {
-    const { email } = req.params;
-    try {
-        const user = await User.findOne({ where: { email } });
-        return res.status(200).json({ available: !user });
-    } catch (err) {
-        return res.status(500).json({ message: 'Server error.', error: err.message });
-    }
-};
-
-

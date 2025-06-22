@@ -1,5 +1,5 @@
 // models/index.js
-const sequelize      = require('../config/db.mariadb');
+const {sequelize}      = require('../config/db.mariadb');
 const User           = require('./User');
 const Book           = require('./Book');
 const MainGenre      = require('./MainGenre');
@@ -36,3 +36,5 @@ module.exports = {
     SubGenre,
     BookSubGenre,
 };
+
+
