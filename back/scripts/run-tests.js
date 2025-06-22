@@ -4,7 +4,7 @@ const { execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
-// Timestamp ISO-safe pour les noms de fichiers
+// Timestamp ISO-safe pour le JSON
 const now = new Date().toISOString().replace(/[:.]/g, '-');
 const reportsDir = path.resolve(__dirname, '../reports');
 const jsonReport = path.join(reportsDir, `test-results-${now}.json`);
@@ -14,8 +14,6 @@ const htmlReport = path.join(reportsDir, 'Rapport-de-tests-BiblioTech.html');
 fs.mkdirSync(reportsDir, { recursive: true });
 
 console.log('🏃 Lancement des tests en mode verbose et génération des rapports…');
-// --json + --outputFile génèrent le JSON,
-// et le reporter jest-html-reporters (configuré dans jest.config.js) génère le HTML
 execSync(
     `npx jest --runInBand --json --outputFile="${jsonReport}"`,
     { stdio: 'inherit' }
