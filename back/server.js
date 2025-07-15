@@ -5,15 +5,6 @@ const app = require('./app');
 const { connectMariaDB } = require('./config/db.mariadb');
 const { connectMongoDB } = require('./config/db.mongo');
 
-// On importe l'instance Sequelize depuis le dossier models
-const { sequelize } = require('./models');
-
-// --------------
-// On attache sequelize sur app pour que les tests
-// puissent faire : const { sequelize } = require('../server');
-// --------------
-app.sequelize = sequelize;
-
 const PORT = process.env.PORT || 5000;
 
 // Ne lancer le serveur que si on exécute directement `node server.js`
@@ -39,5 +30,4 @@ if (require.main === module) {
     })();
 }
 
-// On exporte l'app (avec la propriété sequelize) pour Supertest
 module.exports = app;

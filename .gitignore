@@ -1,15 +1,10 @@
-# --- GLOBAL ---
-
-# Dependency directories
+# Dependencies
 node_modules/
-jspm_packages/
+package-lock.json
 
 # Logs
 *.log
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
 
 # Environment variables
 .env
@@ -22,81 +17,19 @@ Thumbs.db
 # IDEs & Editors
 .vscode/
 .idea/
-*.sublime-project
-*.sublime-workspace
-
-# Optional build cache
-.cache/
-.tmp/
-
-# Lint & Testing
-coverage/
-.nyc_output/
-*.lcov
-
-# --- FRONTEND (Vue.js) ---
-
-# Vue CLI build output
-dist/
-public/build/
-
-# Vite output
-.vite/
-dist-ssr/
-ssr-manifest.json
-
-# Local dev server files (e.g., vite)
-dev-dist/
-
-# Vuepress
-.vuepress/dist
-
-# Nuxt
-.nuxt/
-output/
-
-# --- BACKEND (Node.js) ---
 
 # Build output
 build/
 dist/
 
-# PM2 log files
-pids/
-*.pid
-*.seed
-*.pid.lock
-
-# SQLite
+# Database files
 *.sqlite
 *.sqlite3
 
-# Mongoose/Mongo
-dump/
+# Uploads (keep structure)
+uploads/*
+!uploads/.gitkeep
 
-# TypeScript
-*.tsbuildinfo
-
-# Prisma
-prisma/migrations/
-
-# --- DOCKER ---
-
-# Docker related
-docker-compose.override.yml
-.docker/
-
-# --- CUSTOM ---
-
-# Ignore any secrets or personal dev stuff
-secrets.*
+# Development files
 *.local
-
-# Ignore local SSL certs if any
-certs/
-*.pem
-*.crt
-*.key
-
-#upload des images
-uploads/
+secrets.*

@@ -4,10 +4,12 @@ const { protect }    = require('../middlewares/authMiddleware');
 const admin          = require('../middlewares/admin');
 const upload         = require('../middlewares/upload');
 const userController = require('../controllers/userController');
+const { validateId, validatePagination } = require('../middlewares/validation');
+const { generalLimiter } = require('../middlewares/rateLimiter');
 
-router.get('/',        protect, admin, userController.getAll);
-router.get('/:id',     protect, userController.getOne);
-router.put('/:id',     protect, upload.single('avatar'), userController.update);
-router.delete('/:id',  protect, admin, userController.remove);
+router.get('/', generalLimiter, protect, admin, validatePagination, userController.getAll);
+router.get('/:id', generalLimiter, protect, validateId, userController.getOne);
+router.put('/:id', generalLimiter, protect, validateId, upload.single('avatar'), userController.update);
+router.delete('/:id', generalLimiter, protect, validateId, userController.remove);
 
 module.exports = router;

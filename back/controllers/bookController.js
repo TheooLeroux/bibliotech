@@ -6,6 +6,7 @@ const Ebook     = require('../models/Ebook');
 const Book      = require('../models/Book');
 const SubGenre  = require('../models/SubGenre');
 const MainGenre = require('../models/MainGenre');
+const { User }  = require('../models');
 
 exports.createBook = async (req, res) => {
     try {
@@ -72,7 +73,7 @@ exports.createBook = async (req, res) => {
             main_genre_id: parseInt(main_genre_id, 10)
         });
 
-        // 6) Mettre à jour MongoDB avec l’ID SQL
+        // 6) Mettre à jour MongoDB avec l'ID SQL
         ebookDoc.book_id = newBook.id;
         await ebookDoc.save();
 
@@ -202,6 +203,155 @@ exports.updateBook = async (req, res) => {
         return res.status(200).json({
             message: 'Book updated successfully.',
             book
+        });
+
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: 'Server error.', error: err.message });
+    }
+};
+
+// GET /api/books - Lister tous les livres avec pagination et filtres
+exports.getBooks = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const offset = (page - 1) * limit;
+
+        // Filtres optionnels
+        const where = { visibility: 'public' };
+        if (req.query.author) where.author = { [require('sequelize').Op.iLike]: `%${req.query.author}%` };
+        if (req.query.title) where.title = { [require('sequelize').Op.iLike]: `%${req.query.title}%` };
+        if (req.query.language) where.language = req.query.language;
+        if (req.query.main_genre_id) where.main_genre_id = req.query.main_genre_id;
+
+        const { count, rows } = await Book.findAndCountAll({
+            where,
+            include: [
+                {
+                    model: User,
+                    attributes: ['id', 'pseudo']
+                },
+                {
+                    model: MainGenre,
+                    attributes: ['id', 'name']
+                },
+                {
+                    model: SubGenre,
+                    as: 'subGenres',
+                    attributes: ['id', 'name'],
+                    through: { attributes: [] }
+                }
+            ],
+            limit,
+            offset,
+            order: [['created_at', 'DESC']]
+        });
+
+        return res.status(200).json({
+            message: 'Books retrieved successfully.',
+            data: {
+                books: rows,
+                pagination: {
+                    page,
+                    limit,
+                    total: count,
+                    pages: Math.ceil(count / limit)
+                }
+            }
+        });
+
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: 'Server error.', error: err.message });
+    }
+};
+
+// GET /api/books/:id - Récupérer un livre par ID
+exports.getBook = async (req, res) => {
+    try {
+        const bookId = parseInt(req.params.id, 10);
+        
+        const book = await Book.findByPk(bookId, {
+            include: [
+                {
+                    model: User,
+                    attributes: ['id', 'pseudo']
+                },
+                {
+                    model: MainGenre,
+                    attributes: ['id', 'name']
+                },
+                {
+                    model: SubGenre,
+                    as: 'subGenres',
+                    attributes: ['id', 'name'],
+                    through: { attributes: [] }
+                }
+            ]
+        });
+
+        if (!book) {
+            return res.status(404).json({ message: 'Book not found.' });
+        }
+
+        // Vérifier la visibilité
+        if (book.visibility === 'private' && (!req.user || req.user.id !== book.user_id && req.user.role !== 'admin')) {
+            return res.status(403).json({ message: 'Access denied to private book.' });
+        }
+
+        // Incrémenter le compteur de lecture si connecté
+        if (req.user) {
+            await book.increment('read_count');
+        }
+
+        return res.status(200).json({
+            message: 'Book retrieved successfully.',
+            book
+        });
+
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: 'Server error.', error: err.message });
+    }
+};
+
+// DELETE /api/books/:id - Supprimer un livre
+exports.deleteBook = async (req, res) => {
+    try {
+        const bookId = parseInt(req.params.id, 10);
+        const book = await Book.findByPk(bookId);
+
+        if (!book) {
+            return res.status(404).json({ message: 'Book not found.' });
+        }
+
+        // Vérifier les permissions
+        if (req.user.id !== book.user_id && req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Forbidden.' });
+        }
+
+        // Supprimer les fichiers physiques
+        if (book.file_url && fs.existsSync(book.file_url)) {
+            fs.unlinkSync(book.file_url);
+        }
+        if (book.cover_url && fs.existsSync(book.cover_url)) {
+            fs.unlinkSync(book.cover_url);
+        }
+
+        // Supprimer le document MongoDB
+        if (book.mongo_doc_id) {
+            await Ebook.deleteOne({ _id: book.mongo_doc_id });
+        }
+
+        // Supprimer les relations many-to-many (sous-genres)
+        await book.setSubGenres([]);
+
+        // Supprimer le livre de la base SQL
+        await book.destroy();
+
+        return res.status(200).json({
+            message: 'Book deleted successfully.'
         });
 
     } catch (err) {

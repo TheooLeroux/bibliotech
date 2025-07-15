@@ -16,32 +16,58 @@ const storage = multer.diskStorage({
     },
     filename: (req, file, cb) => {
         const ext = path.extname(file.originalname).toLowerCase();
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         if (file.fieldname === 'file') {
-            cb(null, `book-${Date.now()}${ext}`);
+            cb(null, `book-${uniqueSuffix}${ext}`);
         } else {
-            cb(null, `cover-${Date.now()}${ext}`);
+            cb(null, `cover-${uniqueSuffix}${ext}`);
         }
     }
 });
 
 const fileFilter = (req, file, cb) => {
     if (file.fieldname === 'file') {
-        // accepter PDF et EPUB
-        const ok = ['.pdf','.epub'].includes(path.extname(file.originalname).toLowerCase());
-        return cb(ok ? null : new Error('Only PDF/EPUB allowed'), ok);
+        // Vérification double : extension ET type MIME
+        const allowedExtensions = ['.pdf', '.epub'];
+        const allowedMimeTypes = ['application/pdf', 'application/epub+zip', 'application/octet-stream'];
+        
+        const ext = path.extname(file.originalname).toLowerCase();
+        const isValidExtension = allowedExtensions.includes(ext);
+        const isValidMimeType = allowedMimeTypes.includes(file.mimetype);
+        
+        if (isValidExtension && isValidMimeType) {
+            return cb(null, true);
+        } else {
+            return cb(new Error(`Invalid eBook file. Only PDF and EPUB files are allowed. Extension: ${ext}, MIME: ${file.mimetype}`), false);
+        }
     }
+    
     if (file.fieldname === 'cover') {
-        // accepter jpeg/png
-        const ok = ['.jpg','.jpeg','.png'].includes(path.extname(file.originalname).toLowerCase());
-        return cb(ok ? null : new Error('Only JPEG/PNG allowed'), ok);
+        // Vérification double : extension ET type MIME pour les images
+        const allowedExtensions = ['.jpg', '.jpeg', '.png'];
+        const allowedMimeTypes = ['image/jpeg', 'image/png'];
+        
+        const ext = path.extname(file.originalname).toLowerCase();
+        const isValidExtension = allowedExtensions.includes(ext);
+        const isValidMimeType = allowedMimeTypes.includes(file.mimetype);
+        
+        if (isValidExtension && isValidMimeType) {
+            return cb(null, true);
+        } else {
+            return cb(new Error(`Invalid cover image. Only JPEG and PNG files are allowed. Extension: ${ext}, MIME: ${file.mimetype}`), false);
+        }
     }
-    cb(null, false);
+    
+    cb(new Error('Unknown field name'), false);
 };
 
 module.exports = multer({
     storage,
     fileFilter,
-    limits: { fileSize: 50 * 1024 * 1024 }  // 50MB max
+    limits: { 
+        fileSize: 50 * 1024 * 1024,  // 50MB max
+        files: 2  // Maximum 2 fichiers (book + cover)
+    }
 }).fields([
     { name: 'file',  maxCount: 1 },
     { name: 'cover', maxCount: 1 }
