@@ -31,8 +31,8 @@ const validateRegister = [
     body('password')
         .isLength({ min: 8, max: 128 })
         .withMessage('Password must be between 8 and 128 characters')
-        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/)
-        .withMessage('Password must contain at least one lowercase, one uppercase, one number and one special character (@$!%*?&)'),
+        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.])/)
+        .withMessage('Password must contain at least one lowercase, one uppercase, one number and one special character (@$!%*?&.)'),
     body('confirmPassword')
         .custom((value, { req }) => {
             if (value !== req.body.password) {
@@ -141,6 +141,9 @@ const validatePagination = [
 
 // Validation pour les commentaires
 const validateComment = [
+    body('bookId')
+        .isInt({ min: 1 })
+        .withMessage('bookId must be a positive integer'),
     body('content')
         .isLength({ min: 1, max: 1000 })
         .withMessage('Content must be between 1 and 1000 characters')

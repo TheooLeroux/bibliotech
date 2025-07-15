@@ -13,9 +13,9 @@ router.get('/', generalLimiter, validatePagination, bookController.getBooks);
 // GET /api/books/:id - Récupérer un livre par ID (public/privé selon visibilité)
 router.get('/:id', generalLimiter, validateId, bookController.getBook);
 
-// POST /api/books - Créer un livre (authentifié)
+// POST /api/books/upload - Uploader un livre (authentifié)
 router.post(
-    '/',
+    '/upload',
     uploadLimiter,
     protect,
     uploadBook,

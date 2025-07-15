@@ -211,3 +211,37 @@ exports.reactivate = async (req, res) => {
         return res.status(500).json({ message: 'Erreur serveur.', error: err.message });
     }
 };
+
+// — CHANGE PASSWORD —
+exports.changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword, confirmPassword } = req.body;
+        
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            return res.status(400).json({ message: 'Tous les champs sont requis.' });
+        }
+        
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({ message: 'Les nouveaux mots de passe ne correspondent pas.' });
+        }
+        
+        const user = await User.findByPk(req.user.id);
+        if (!user) return res.status(404).json({ message: 'Utilisateur non trouvé.' });
+        
+        // Vérifier le mot de passe actuel
+        const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+        if (!isValidPassword) {
+            return res.status(400).json({ message: 'Mot de passe actuel incorrect.' });
+        }
+        
+        // Hasher le nouveau mot de passe
+        const hash = await bcrypt.hash(newPassword, 10);
+        await user.update({ password: hash });
+        
+        console.log(`🔑 Changement de mot de passe: ${user.pseudo} (ID: ${user.id})`);
+        return res.status(200).json({ message: 'Mot de passe modifié avec succès.' });
+    } catch (err) {
+        console.error('Erreur lors du changement de mot de passe:', err);
+        return res.status(500).json({ message: 'Erreur serveur.', error: err.message });
+    }
+};

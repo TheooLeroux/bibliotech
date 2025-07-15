@@ -14,10 +14,7 @@ router.post('/', validateFavorite, favoriteController.addFavorite);
 router.delete('/:bookId', favoriteController.removeFavorite);
 
 // Obtenir les favoris de l'utilisateur connecté
-router.get('/me', favoriteController.getUserFavorites);
-
-// Obtenir les favoris d'un utilisateur spécifique
-router.get('/user/:userId', favoriteController.getUserFavorites);
+router.get('/', favoriteController.getUserFavorites);
 
 // Vérifier si un livre est dans les favoris
 router.get('/check/:bookId', favoriteController.checkFavorite);

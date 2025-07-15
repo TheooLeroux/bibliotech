@@ -12,7 +12,7 @@ router.get('/book/:bookId', commentController.getBookComments);
 router.use(protect);
 
 // Ajouter un commentaire
-router.post('/book/:bookId', validateComment, commentController.addComment);
+router.post('/', validateComment, commentController.addComment);
 
 // Modifier son propre commentaire
 router.put('/:commentId', validateComment, commentController.updateComment);

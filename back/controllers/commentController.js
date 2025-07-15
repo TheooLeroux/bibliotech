@@ -3,8 +3,7 @@ const { Comment, User, Book } = require('../models');
 // Ajouter un commentaire
 exports.addComment = async (req, res) => {
     try {
-        const { bookId } = req.params;
-        const { content, rating, is_spoiler } = req.body;
+        const { bookId, content, rating, is_spoiler } = req.body;
         const userId = req.user.id;
 
         const comment = await Comment.create({

@@ -42,7 +42,7 @@ exports.updateReadingStatus = async (req, res) => {
 // Obtenir l'historique de lecture d'un utilisateur
 exports.getUserReadingHistory = async (req, res) => {
     try {
-        const userId = req.params.userId || req.user.id;
+        const userId = req.user.id;
         const { status } = req.query;
 
         const where = { user_id: userId };
@@ -75,7 +75,7 @@ exports.getUserReadingHistory = async (req, res) => {
 // Obtenir les statistiques de lecture
 exports.getReadingStats = async (req, res) => {
     try {
-        const userId = req.params.userId || req.user.id;
+        const userId = req.user.id;
 
         const stats = await ReadingHistory.findAll({
             where: { user_id: userId },

@@ -100,12 +100,12 @@ exports.verifySession = async (req, res) => {
 // Terminer une session
 exports.endSession = async (req, res) => {
     try {
-        const { token } = req.params;
+        const { sessionId } = req.params;
         const userId = req.user.id;
 
         const deleted = await UserSession.destroy({
             where: {
-                token,
+                id: sessionId,
                 user_id: userId
             }
         });
@@ -130,24 +130,21 @@ exports.endSession = async (req, res) => {
     }
 };
 
-// Terminer toutes les sessions d'un utilisateur (sauf la session courante)
+// Terminer toutes les sessions d'un utilisateur (sauf la session courante optionnelle)
 exports.endAllSessions = async (req, res) => {
     try {
         const userId = req.user.id;
-        const currentToken = req.headers.authorization?.split(' ')[1];
-
-        await UserSession.destroy({
+        
+        // Terminer toutes les sessions de l'utilisateur
+        const deleted = await UserSession.destroy({
             where: {
-                user_id: userId,
-                token: {
-                    [Op.ne]: currentToken
-                }
+                user_id: userId
             }
         });
 
         res.json({
             success: true,
-            message: "Toutes les autres sessions ont été terminées"
+            message: `${deleted} sessions ont été terminées`
         });
     } catch (error) {
         res.status(500).json({

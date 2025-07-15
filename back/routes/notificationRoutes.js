@@ -28,6 +28,6 @@ router.get('/unread-count', notificationController.getUnreadCount);
 router.use(adminMiddleware);
 
 // Créer une notification (admin seulement)
-router.post('/', notificationValidation, notificationController.createNotification);
+router.post('/', notificationController.createNotification);
 
 module.exports = router; 

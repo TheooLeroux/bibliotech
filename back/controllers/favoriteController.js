@@ -61,7 +61,7 @@ exports.removeFavorite = async (req, res) => {
 // Obtenir les favoris d'un utilisateur
 exports.getUserFavorites = async (req, res) => {
     try {
-        const userId = req.params.userId || req.user.id;
+        const userId = req.user.id;
 
         const favorites = await Favorite.findAll({
             where: { user_id: userId },

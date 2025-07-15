@@ -1,0 +1,29 @@
+{
+  "environment": "development",
+  "database": {
+    "host": "localhost",
+    "port": 3306,
+    "name": "bibliotech",
+    "user": "root",
+    "password": ""
+  },
+  "security": {
+    "rateLimitSkipLocalhost": true,
+    "detailedErrors": true,
+    "tokenCleanupEnabled": true,
+    "sessionCleanupEnabled": true,
+    "passwordValidationStrict": true,
+    "authLimitsStrict": true
+  },
+  "logging": {
+    "level": "debug",
+    "queryLogging": true,
+    "securityLogging": true
+  },
+  "features": {
+    "autoCleanup": true,
+    "devRoutes": true,
+    "stackTraces": true,
+    "httpAllowed": true
+  }
+}

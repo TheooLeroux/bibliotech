@@ -21,4 +21,7 @@ router.post('/reactivate/:token', passwordResetLimiter, validateReactivate, auth
 // logout
 router.post('/logout', protect, authController.logout);
 
+// changement de mot de passe
+router.put('/change-password', authLimiter, protect, authController.changePassword);
+
 module.exports = router;
