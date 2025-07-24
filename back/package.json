@@ -8,12 +8,22 @@
     "dev": "nodemon server.js",
     "setup:dev": "node scripts/devSetup.js",
     "db:schema": "mysql -u root -p bibliotech < bdd/schema-complete.sql",
-    "db:reset": "mysql -u root -p -e \"DROP DATABASE IF EXISTS bibliotech; CREATE DATABASE bibliotech;\" && npm run db:schema"
+    "db:reset": "mysql -u root -p -e \"DROP DATABASE IF EXISTS bibliotech; CREATE DATABASE bibliotech;\" && npm run db:schema",
+    "test": "jest --detectOpenHandles --forceExit",
+    "test:watch": "jest --watch --detectOpenHandles",
+    "test:coverage": "jest --coverage --detectOpenHandles --forceExit",
+    "test:unit": "jest tests/unit --detectOpenHandles --forceExit",
+    "test:integration": "jest tests/integration --detectOpenHandles --forceExit",
+    "test:security": "jest tests/security --detectOpenHandles --forceExit",
+    "test:e2e": "node tests/e2e/test-routes.js",
+    "test:demo": "node run-all-tests.js",
+    "docs:validate": "node validate-docs.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.10.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
@@ -31,6 +41,31 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.10",
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0",
+    "jest-html-reporters": "^3.1.7"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coverageDirectory": "coverage",
+    "collectCoverageFrom": [
+      "controllers/**/*.js",
+      "middlewares/**/*.js",
+      "models/**/*.js",
+      "routes/**/*.js",
+      "!**/*.test.js",
+      "!**/node_modules/**"
+    ],
+    "testTimeout": 10000,
+    "setupFilesAfterEnv": ["<rootDir>/tests/setup.js"],
+    "reporters": [
+      "default",
+      ["jest-html-reporters", {
+        "publicPath": "./coverage",
+        "filename": "test-report.html",
+        "expand": true
+      }]
+    ]
   }
 }

@@ -1,0 +1,736 @@
+openapi: 3.0.3
+info:
+  title: BiblioTech API
+  description: |
+    API REST sécurisée pour la gestion d'une bibliothèque numérique.
+    
+    ## Fonctionnalités
+    - Authentification JWT sécurisée
+    - Gestion des utilisateurs et profils
+    - Upload et gestion de livres
+    - Système de favoris et historique de lecture
+    - Commentaires et notations
+    - Notifications en temps réel
+    - Signalements de contenu
+    - Gestion des sessions
+    
+    ## Sécurité
+    - Rate limiting
+    - Validation stricte des entrées
+    - Protection XSS et CSRF
+    - Chiffrement des mots de passe
+    - Blacklist JWT pour déconnexion sécurisée
+  version: 1.0.0
+  contact:
+    name: BiblioTech Support
+    email: support@bibliotech.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:4000/api
+    description: Serveur de développement
+  - url: https://api.bibliotech.com
+    description: Serveur de production
+
+security:
+  - BearerAuth: []
+
+paths:
+  # ═══════════════════════════════════════════════════════════════════════════
+  # AUTHENTIFICATION
+  # ═══════════════════════════════════════════════════════════════════════════
+  
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Inscription d'un nouvel utilisateur
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - pseudo
+                - email
+                - password
+              properties:
+                pseudo:
+                  type: string
+                  minLength: 2
+                  maxLength: 50
+                  example: "MonPseudo"
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+                password:
+                  type: string
+                  minLength: 8
+                  pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])'
+                  example: "MotDePasseSecurise123!"
+      responses:
+        '201':
+          description: Utilisateur créé avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "User created successfully."
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Connexion utilisateur
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+                password:
+                  type: string
+                  example: "MotDePasseSecurise123!"
+      responses:
+        '200':
+          description: Connexion réussie
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Login successful."
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIs..."
+                  user:
+                    $ref: '#/components/schemas/UserPublic'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Déconnexion utilisateur
+      responses:
+        '200':
+          description: Déconnexion réussie
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Logged out successfully."
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /auth/forgot-password:
+    post:
+      tags:
+        - Authentication
+      summary: Demande de réinitialisation de mot de passe
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+      responses:
+        '200':
+          description: Email de réinitialisation envoyé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Un lien de réinitialisation a été envoyé à votre adresse email."
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # UTILISATEURS
+  # ═══════════════════════════════════════════════════════════════════════════
+  
+  /users/profile:
+    get:
+      tags:
+        - Users
+      summary: Récupérer mon profil
+      responses:
+        '200':
+          description: Profil utilisateur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+    
+    put:
+      tags:
+        - Users
+      summary: Mettre à jour mon profil
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                pseudo:
+                  type: string
+                  minLength: 2
+                  maxLength: 50
+                bio:
+                  type: string
+                  maxLength: 500
+                avatar:
+                  type: string
+                  format: binary
+                  description: Image JPG/PNG, max 5MB
+      responses:
+        '200':
+          description: Profil mis à jour
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Profile updated successfully."
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /users:
+    get:
+      tags:
+        - Users
+      summary: Lister les utilisateurs (Admin)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Liste des utilisateurs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserPublic'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # LIVRES
+  # ═══════════════════════════════════════════════════════════════════════════
+  
+  /books:
+    get:
+      tags:
+        - Books
+      summary: Lister les livres
+      security: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 12
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: genre
+          in: query
+          schema:
+            type: string
+        - name: subgenre
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Liste des livres
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  books:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Book'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+  /books/{id}:
+    get:
+      tags:
+        - Books
+      summary: Récupérer un livre
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Détails du livre
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookDetail'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /books/upload:
+    post:
+      tags:
+        - Books
+      summary: Télécharger un livre
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - title
+                - author
+                - description
+                - main_genre_id
+                - file
+              properties:
+                title:
+                  type: string
+                  maxLength: 255
+                author:
+                  type: string
+                  maxLength: 255
+                description:
+                  type: string
+                main_genre_id:
+                  type: integer
+                sub_genres:
+                  type: string
+                  description: IDs séparés par virgule
+                file:
+                  type: string
+                  format: binary
+                  description: Fichier PDF/EPUB, max 50MB
+                cover:
+                  type: string
+                  format: binary
+                  description: Image JPG/PNG, max 5MB
+      responses:
+        '201':
+          description: Livre créé avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  book:
+                    $ref: '#/components/schemas/Book'
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # FAVORIS
+  # ═══════════════════════════════════════════════════════════════════════════
+  
+  /favorites:
+    get:
+      tags:
+        - Favorites
+      summary: Mes favoris
+      responses:
+        '200':
+          description: Liste des favoris
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Favorite'
+    
+    post:
+      tags:
+        - Favorites
+      summary: Ajouter aux favoris
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - bookId
+              properties:
+                bookId:
+                  type: integer
+      responses:
+        '201':
+          description: Ajouté aux favoris
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  /favorites/{bookId}:
+    delete:
+      tags:
+        - Favorites
+      summary: Retirer des favoris
+      parameters:
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Retiré des favoris
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+# ═══════════════════════════════════════════════════════════════════════════
+# COMPOSANTS RÉUTILISABLES
+# ═══════════════════════════════════════════════════════════════════════════
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT obtenu via /auth/login
+
+  schemas:
+    UserPublic:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        pseudo:
+          type: string
+          example: "MonPseudo"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        role:
+          type: string
+          enum: [user, admin]
+          example: "user"
+
+    UserProfile:
+      allOf:
+        - $ref: '#/components/schemas/UserPublic'
+        - type: object
+          properties:
+            bio:
+              type: string
+              example: "Ma biographie"
+            avatar_url:
+              type: string
+              example: "/uploads/avatars/avatar.jpg"
+            created_at:
+              type: string
+              format: date-time
+              example: "2025-01-24T10:00:00.000Z"
+            last_login:
+              type: string
+              format: date-time
+              example: "2025-01-24T11:00:00.000Z"
+
+    Book:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: "Titre du Livre"
+        author:
+          type: string
+          example: "Auteur"
+        description:
+          type: string
+          example: "Description du livre"
+        cover_url:
+          type: string
+          example: "/uploads/covers/cover.jpg"
+        file_url:
+          type: string
+          example: "/uploads/books/book.pdf"
+        main_genre:
+          type: string
+          example: "Fiction"
+        sub_genres:
+          type: array
+          items:
+            type: string
+          example: ["Science-Fiction", "Aventure"]
+        upload_date:
+          type: string
+          format: date-time
+          example: "2025-01-24T10:00:00.000Z"
+        uploader:
+          type: object
+          properties:
+            id:
+              type: integer
+            pseudo:
+              type: string
+
+    BookDetail:
+      allOf:
+        - $ref: '#/components/schemas/Book'
+        - type: object
+          properties:
+            stats:
+              type: object
+              properties:
+                favorites_count:
+                  type: integer
+                  example: 25
+                comments_count:
+                  type: integer
+                  example: 12
+                average_rating:
+                  type: number
+                  format: float
+                  example: 4.2
+
+    Favorite:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        user_id:
+          type: integer
+          example: 1
+        book_id:
+          type: integer
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-01-24T10:00:00.000Z"
+        book:
+          type: object
+          properties:
+            id:
+              type: integer
+            title:
+              type: string
+            author:
+              type: string
+            cover_url:
+              type: string
+
+    Pagination:
+      type: object
+      properties:
+        current_page:
+          type: integer
+          example: 1
+        total_pages:
+          type: integer
+          example: 5
+        total_books:
+          type: integer
+          example: 48
+        per_page:
+          type: integer
+          example: 12
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Description de l'erreur"
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                example: "email"
+              message:
+                type: string
+                example: "Format email invalide"
+
+  responses:
+    ValidationError:
+      description: Erreur de validation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: "Validation errors"
+            errors:
+              - field: "password"
+                message: "Le mot de passe doit contenir au moins 8 caractères"
+
+    UnauthorizedError:
+      description: Non autorisé - Token manquant ou invalide
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Unauthorized."
+
+    ForbiddenError:
+      description: Accès interdit - Permissions insuffisantes
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Forbidden."
+
+    NotFoundError:
+      description: Ressource non trouvée
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Resource not found."
+
+    ConflictError:
+      description: Conflit - Ressource déjà existante
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Email already in use."
+
+    RateLimitError:
+      description: Limite de taux dépassée
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Too many requests. Please try again later."
+
+tags:
+  - name: Authentication
+    description: Authentification et gestion des sessions
+  - name: Users
+    description: Gestion des utilisateurs et profils
+  - name: Books
+    description: Gestion des livres et uploads
+  - name: Favorites
+    description: Système de favoris
+  - name: Reading History
+    description: Historique et progression de lecture
+  - name: Comments
+    description: Commentaires et notations
+  - name: Notifications
+    description: Système de notifications
+  - name: Reports
+    description: Signalements de contenu
+  - name: Sessions
+    description: Gestion des sessions actives 

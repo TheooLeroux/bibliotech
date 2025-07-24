@@ -35,7 +35,13 @@ SubGenre.belongsToMany(Book, {
     as: 'books'
 });
 
-// ── Association Utilisateur ↔ Favoris ─────────────────────────────────────
+// ── Associations directes pour Favorite (AJOUT CRITIQUE) ─────────────────────
+Favorite.belongsTo(User, { foreignKey: 'user_id' });
+Favorite.belongsTo(Book, { foreignKey: 'book_id' });
+User.hasMany(Favorite, { foreignKey: 'user_id' });
+Book.hasMany(Favorite, { foreignKey: 'book_id' });
+
+// ── Association Utilisateur ↔ Favoris (Many-to-Many) ───────────────────────
 User.belongsToMany(Book, {
     through: Favorite,
     foreignKey: 'user_id',
@@ -49,7 +55,13 @@ Book.belongsToMany(User, {
     as: 'usersFavorited'
 });
 
-// ── Association Utilisateur ↔ Historique de lecture ───────────────────────
+// ── Associations directes pour ReadingHistory (AJOUT CRITIQUE) ──────────────
+ReadingHistory.belongsTo(User, { foreignKey: 'user_id' });
+ReadingHistory.belongsTo(Book, { foreignKey: 'book_id' });
+User.hasMany(ReadingHistory, { foreignKey: 'user_id' });
+Book.hasMany(ReadingHistory, { foreignKey: 'book_id' });
+
+// ── Association Utilisateur ↔ Historique de lecture (Many-to-Many) ─────────
 User.belongsToMany(Book, {
     through: ReadingHistory,
     foreignKey: 'user_id',

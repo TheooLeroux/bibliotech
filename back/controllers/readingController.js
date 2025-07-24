@@ -56,7 +56,7 @@ exports.getUserReadingHistory = async (req, res) => {
                 model: Book,
                 attributes: ['id', 'title', 'author', 'cover_url']
             }],
-            order: [['updated_at', 'DESC']]
+            order: [['started_at', 'DESC']]
         });
 
         res.json({
